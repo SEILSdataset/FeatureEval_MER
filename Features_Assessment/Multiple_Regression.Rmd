@@ -1,0 +1,721 @@
+---
+title: "Multiple_Regression"
+output: html_document
+---
+
+
+```{r import_data_all}
+library(readr)
+library(janitor)
+all_features <- read_csv("all_annotations.csv")
+mean_df <- read_csv("GoldStandard.csv")
+View(all_features)
+View(mean_df)
+```
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------ASSESS CROSSED RANDOM EFFECTS----------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+# We assess wether the crossed random effects (user_IDxSong) are a better fit w.r.t. the individual random intercepts.
+
+```{r lme_Arousal}
+library(nlme)
+library(lme4)
+# Fit linear model with random intercept ID
+random.ID.model <- lmer(Arousal ~ (1 |ID), data=all_features) # one random effect
+summary(random.ID.model)
+# Fit linear model with random intercept song
+random.song.model <- lmer(Arousal ~ (1 |Song2), data=all_features) # one random effect
+summary(random.song.model)
+# Fit linear model with crossed random intercepts ID and Song
+crossed.random.model <- lmer(Arousal ~ (1 |Song2) + (1 |ID), data=all_features) # crossed random effects
+summary(crossed.random.model)
+anova(random.ID.model, random.song.model, crossed.random.model)
+```
+
+
+```{r lme_Valence}
+library(nlme)
+library(lme4)
+# Fit linear model with random intercept ID
+random.ID.model <- lmer(Valence ~ (1 |ID), data=all_features) # one random effect
+summary(random.ID.model)
+# Fit linear model with random intercept song
+random.song.model <- lmer(Valence ~ (1 |Song2), data=all_features) # one random effect
+summary(random.song.model)
+# Fit linear model with crossed random intercepts ID and Song
+crossed.random.model <- lmer(Valence ~ (1 |Song2) + (1 |ID), data=all_features) # crossed random effects
+summary(crossed.random.model)
+anova(random.ID.model, random.song.model, crossed.random.model)
+```
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------FEATURE SELECTION AROUSAL--------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+  ##########################################
+             GENETIC ALGORITHM  
+  ##########################################
+ 
+Initialise predictors search with the feature showing a correlation with the outcome variable (Valence) higher than 0.3
+
+```{r GA_feature_selection_AROUSAL}
+library(caret)
+
+set.seed(10)
+predictors <- subset(mean_df, select=c(Most_Common_Rhythmic_Value, Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized, Note_Density, pcm_zcr_sma_skewness, Standard_Triads, Melodic_Large_Intervals, Most_Common_Vertical_Interval, Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized, BPM, pcm_intensity_sma_min, Prevalence_of_Dotted_Notes, Importance_of_Bass_Register, Similar_Motion, Second_Strongest_Rhythmic_Pulse, Non.Standard_Chords, F0env_sma_quartile3, Relative_Prevalence_of_Most_Common_Rhythmic_Values, Difference_Between_Most_Common_Rhythmic_Values, Dominant_Seventh_Chords, Direction_of_Melodic_Motion, F0env_sma_linregerrQ, Chromatic_Motion))
+outcome <- mean_df$A_mean
+
+ctrl <- gafsControl(functions = caretGA)
+obj.test.100.A <- gafs(x = predictors, 
+            y = outcome,
+            iters = 100,
+            gafsControl = ctrl,
+            method = "lm")
+```
+
+
+```{r}
+obj.test.100.A
+```
+
+
+Initial model with the selected predictors from the Genetic Algorithm
+
+```{r GA_Model_multiple_regression_arousal}
+library(lmerTest)
+model.A_GA <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + pcm_zcr_sma_skewness + Similar_Motion + (1 |Song2) + (1 |ID), data=all_features)
+res <- summary(model.A_GA)
+res
+model.A_GA.AIC <- AIC(model.A_GA)
+model.A_GA.AIC
+```
+
+Updated model by dropping not relevant predictors
+
+```{r GA_Model_multiple_regression_arousal2}
+model.A_GA <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + pcm_zcr_sma_skewness + (1 |Song2) + (1 |ID), data=all_features)
+res <- summary(model.A_GA)
+res
+model.A_GA.AIC <- AIC(model.A_GA)
+model.A_GA.AIC
+```
+
+
+##########################################
+            FORWARD SELECTION  
+##########################################
+
+Search for adding a predictor that reduces AIC of Model.1
+
+```{r forward_selection_Arousal}
+df <- subset(all_features, select=-c(row_index, X1, ID, Song, Category, Song2, Arousal, Valence)) 
+all_vars <- colnames(df)
+
+GA.rel_Arousal1 <- data.frame(A="Most_Common_Rhythmic_Value", B="Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized", C="pcm_zcr_sma_skewness", AIC = 2904.025)
+GA_rel_Arousal.OPT <- data.frame(A = character(), B = character(), C = character(), D = character(), AIC = numeric())
+
+for (i in 1:nrow(GA.rel_Arousal1)) {
+  x <- as.vector(t(GA.rel_Arousal1[i,]))
+  for (var in all_vars){
+    if (var != "Arousal" & var != "Valence" & var != x[1] & var != x[2] & var != x[3]){
+      A.formula <- as.formula(paste("Arousal ~", paste(c(x[1], x[2], x[3], var), collapse= " + "),"+ (1 |Song2) + (1 |ID)"))
+      model.A <- lmer(formula=A.formula, data=all_features)
+      res <- summary(model.A)
+      if (AIC(model.A)<=x[4]){
+        new_row <- data.frame(x[1], x[2], x[3], var, AIC(model.A))
+        names(new_row) <- c("A", "B", "C", "D", "AIC")
+        GA_rel_Arousal.OPT <- rbind(new_row, GA_rel_Arousal.OPT)
+      }
+    }
+  }
+}
+GA_rel_Arousal.OPT
+```
+
+
+Search for adding two predictors that reduces AIC of Model.1
+
+```{r forward_selection_Arousal.2}
+df <- subset(all_features, select=-c(row_index, X1, ID, Song, Category, Song2, Arousal, Valence)) 
+all_vars <- colnames(df)
+
+GA.rel_Arousal1 <- data.frame(A="Most_Common_Rhythmic_Value", B="Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized", C="pcm_zcr_sma_skewness", AIC = 2904.025)
+GA_rel_Arousal.OPT <- data.frame(A = character(), B = character(), C = character(), D = character(), E = character(), AIC = numeric())
+
+for (i in 1:nrow(GA.rel_Arousal1)) {
+  x <- as.vector(t(GA.rel_Arousal1[i,]))
+  for (var in all_vars){
+    if (var != "Arousal" & var != "Valence" & var != x[1] & var != x[2] & var != x[3]){
+      for (var2 in all_vars){
+        if (var2 != "Arousal" & var2 != "Valence" & var2 != x[1] & var2 != x[2] & var2 != x[3] & var2 != var){
+          A.formula <- as.formula(paste("Arousal ~", paste(c(x[1], x[2], x[3], var, var2), collapse= " + "),"+ (1 |Song2) + (1 |ID)"))
+          model.A <- lmer(formula=A.formula, data=all_features)
+          res <- summary(model.A)
+          if (AIC(model.A)<=x[4]){
+            new_row <- data.frame(x[1], x[2], x[3], var, var2, AIC(model.A))
+            names(new_row) <- c("A", "B", "C", "D", "E", "AIC")
+            GA_rel_Arousal.OPT <- rbind(new_row, GA_rel_Arousal.OPT)
+          }
+        }
+      }
+    }
+  }
+}
+GA_rel_Arousal.OPT
+```
+
+
+We inspect the results of the new model (Model.2)
+
+```{r GA_Model2_multiple_regression_arousal}
+model.A_GA.2 <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + pcm_zcr_sma_skewness + F0env_sma_linregerrQ + Median_Rhythmic_Value_Offset + (1 |Song2) + (1 |ID), data=all_features)
+res <- summary(model.A_GA.2)
+res
+model.A_GA.2.AIC <- AIC(model.A_GA.2)
+model.A_GA.2.AIC
+```
+
+
+Search for adding a predictor that reduces AIC of Model.2
+
+```{r forward_selection_Arousal.2}
+df <- subset(all_features, select=-c(row_index, X1, ID, Song, Category, Song2, Arousal, Valence)) 
+all_vars <- colnames(df)
+
+GA.rel_Arousal2 <- data.frame(A="Most_Common_Rhythmic_Value", B="Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized", C="pcm_zcr_sma_skewness", D="F0env_sma_linregerrQ", E="Median_Rhythmic_Value_Offset", AIC = 2902.993)
+GA_rel_Arousal.OPT2 <- data.frame(A = character(), B = character(), C = character(), D = character(), E = character(), G = character(), AIC = numeric())
+
+for (i in 1:nrow(GA.rel_Arousal2)) {
+  x <- as.vector(t(GA.rel_Arousal2[i,]))
+  for (var in all_vars){
+    if (var != "Arousal" & var != "Valence" & var != x[1] & var != x[2] & var != x[3] & var != x[4] & var != x[5]){
+      A.formula <- as.formula(paste("Arousal ~", paste(c(x[1], x[2], x[3], x[4], x[5], var), collapse= " + "),"+ (1 |Song2) + (1 |ID)"))
+      model.A <- lmer(formula=A.formula, data=all_features)
+      res <- summary(model.A)
+      if (AIC(model.A)<=x[6]){
+        new_row <- data.frame(x[1], x[2], x[3], x[4], x[5], var, AIC(model.A))
+        names(new_row) <- c("A", "B", "C", "D", "E", "G", "AIC")
+        GA_rel_Arousal.OPT2 <- rbind(new_row, GA_rel_Arousal.OPT2)
+      }
+    }
+  }
+}
+GA_rel_Arousal.OPT2
+```
+
+
+We inspect the results of the new model (Model.3)
+
+```{r GA_Model3_multiple_regression_arousal}
+model.A_GA.3 <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + pcm_zcr_sma_skewness + F0env_sma_linregerrQ + Median_Rhythmic_Value_Offset + pcm_zcr_sma_stddev + (1 |Song2) + (1 |ID), data=all_features)
+res <- summary(model.A_GA.3)
+res
+model.A_GA.3.AIC <- AIC(model.A_GA.3)
+model.A_GA.3.AIC
+```
+
+
+Search for adding two predictors that reduces AIC of Model.3
+
+```{r forward_selection_Arousal.3}
+df <- subset(all_features, select=-c(row_index, X1, ID, Song, Category, Song2, Arousal, Valence)) 
+all_vars <- colnames(df)
+
+GA.rel_Arousal3 <- data.frame(A="Most_Common_Rhythmic_Value", B="Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized", C="pcm_zcr_sma_skewness", D="F0env_sma_linregerrQ", E="Median_Rhythmic_Value_Offset", G="pcm_zcr_sma_stddev", AIC = 2899.335)
+GA_rel_Arousal.OPT3 <- data.frame(A = character(), B = character(), C = character(), D = character(), E = character(), G = character(), H = character(), AIC = numeric())
+
+for (i in 1:nrow(GA.rel_Arousal3)) {
+  x <- as.vector(t(GA.rel_Arousal3[i,]))
+  for (var in all_vars){
+    if (var != "Arousal" & var != "Valence" & var != x[1] & var != x[2] & var != x[3] & var != x[4] & var != x[5] & var != x[6]){
+      A.formula <- as.formula(paste("Arousal ~", paste(c(x[1], x[2], x[3], x[4], x[5], x[6], var), collapse= " + "),"+ (1 |Song2) + (1 |ID)"))
+      model.A <- lmer(formula=A.formula, data=all_features)
+      res <- summary(model.A)
+      if (AIC(model.A)<=x[7]){
+        new_row <- data.frame(x[1], x[2], x[3], x[4], x[5], x[6], var, AIC(model.A))
+        names(new_row) <- c("A", "B", "C", "D", "E", "G", "H", "AIC")
+        GA_rel_Arousal.OPT3 <- rbind(new_row, GA_rel_Arousal.OPT3)
+      }
+    }
+  }
+}
+GA_rel_Arousal.OPT3
+```
+
+
+We inspect the results of the new model (Model.4)
+
+```{r GA_Model4_multiple_regression_arousal}
+model.A_GA.4 <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + pcm_zcr_sma_skewness + F0env_sma_linregerrQ + Median_Rhythmic_Value_Offset + pcm_zcr_sma_stddev + Non.Standard_Chords + (1 |Song2) + (1 |ID), data=all_features)
+res <- summary(model.A_GA.4)
+res
+model.A_GA.4.AIC <- AIC(model.A_GA.4)
+model.A_GA.4.AIC
+```
+
+
+Search for adding two predictors that reduces AIC of Model.4
+
+```{r forward_selection_Arousal.3}
+df <- subset(all_features, select=-c(row_index, X1, ID, Song, Category, Song2, Arousal, Valence)) 
+all_vars <- colnames(df)
+
+GA.rel_Arousal4 <- data.frame(A="Most_Common_Rhythmic_Value", B="Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized", C="pcm_zcr_sma_skewness", D="F0env_sma_linregerrQ", E="Median_Rhythmic_Value_Offset", G="pcm_zcr_sma_stddev", H="Non.Standard_Chords", AIC = 2899.183)
+GA_rel_Arousal.OPT4 <- data.frame(A = character(), B = character(), C = character(), D = character(), E = character(), G = character(), H = character(), I = character(), AIC = numeric())
+
+for (i in 1:nrow(GA.rel_Arousal4)) {
+  x <- as.vector(t(GA.rel_Arousal4[i,]))
+  for (var in all_vars){
+    if (var != "Arousal" & var != "Valence" & var != x[1] & var != x[2] & var != x[3] & var != x[4] & var != x[5] & var != x[6] & var != x[7]){
+      A.formula <- as.formula(paste("Arousal ~", paste(c(x[1], x[2], x[3], x[4], x[5], x[6], x[7], var), collapse= " + "),"+ (1 |Song2) + (1 |ID)"))
+      model.A <- lmer(formula=A.formula, data=all_features)
+      res <- summary(model.A)
+      if (AIC(model.A)<=x[8]){
+        new_row <- data.frame(x[1], x[2], x[3], x[4], x[5], x[6], x[7], var, AIC(model.A))
+        names(new_row) <- c("A", "B", "C", "D", "E", "G", "H", "I", "AIC")
+        GA_rel_Arousal.OPT4 <- rbind(new_row, GA_rel_Arousal.OPT4)
+      }
+    }
+  }
+}
+GA_rel_Arousal.OPT4
+```
+
+
+```{r Best.Model.Arousal}
+Best.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + pcm_zcr_sma_skewness + F0env_sma_linregerrQ + Median_Rhythmic_Value_Offset + pcm_zcr_sma_stddev + Non.Standard_Chords + (1 |Song2) + (1 |ID), data=all_features)
+res <- summary(Best.Model.A)
+res
+Best.Model.A.AIC <- AIC(Best.Model.A)
+Best.Model.A.AIC
+```
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------FEATURE SELECTION VALENCE-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  ##########################################
+             GENETIC ALGORITHM  
+  ##########################################
+  
+Initialise predictors search with the feature showing a correlation with the outcome variable (Valence) higher than 0.3
+
+```{r GA_feature_selection_VALENCE}
+library(caret)
+
+set.seed(10)
+predictors <- subset(mean_df, select=c(F0env_sma_quartile3, Minor_Major_Triad_Ratio,	Minor_Major_Melodic_Third_Ratio, F0env_sma_skewness,	pcm_intensity_sma_minPos,	Similar_Motion,	Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized, Diminished_and_Augmented_Triads,	Dynamic_Range, Non.Standard_Chords, pcm_zcr_sma_skewness, Vertical_Perfect_Fifths, Vertical_Minor_Seconds, Amount_of_Staccato, Prevalence_of_Very_Long_Rhythmic_Values, Prevalence_of_Second_Most_Common_Vertical_Interval, Importance_of_Bass_Register, F0env_sma_max, F0_sma_maxPos, Melodic_Large_Intervals, Vertical_Sixths))
+outcome <- mean_df$V_mean
+
+ctrl <- gafsControl(functions = caretGA)
+obj.test.100 <- gafs(x = predictors, 
+            y = outcome,
+            iters = 100,
+            gafsControl = ctrl,
+            method = "lm")
+```
+
+
+```{r obj.100}
+obj.test.100
+```
+
+
+Initial model with the selected predictors from the Genetial Algorithm
+
+```{r GA_Model_multiple_regression_valence}
+model.V_GA <- lmer(Valence ~ Minor_Major_Triad_Ratio + F0env_sma_skewness + Dynamic_Range + pcm_zcr_sma_skewness + Vertical_Sixths + (1 |Song2) + (1 |ID), data=all_features)
+res <- summary(model.V_GA)
+res
+model.V_GA.AIC <- AIC(model.V_GA)
+model.V_GA.AIC
+```
+
+Updated model by dropping not relevant predictors
+
+```{r GA_Model_multiple_regression_valence2}
+model.V_GA <- lmer(Valence ~ Minor_Major_Triad_Ratio + F0env_sma_skewness + pcm_zcr_sma_skewness + (1 |Song2) + (1 |ID), data=all_features)
+res <- summary(model.V_GA)
+res
+model.V_GA.AIC <- AIC(model.V_GA)
+model.V_GA.AIC
+```
+
+##########################################
+            FORWARD SELECTION  
+##########################################
+
+Search for adding a predictor that reduces AIC of Model.1
+
+```{r forward_selection_Valence}
+df <- subset(all_features, select=-c(row_index, X1, ID, Song, Category, Song2, Arousal, Valence)) 
+all_vars <- colnames(df)
+
+GA.rel_Valence1 <- data.frame(A="Minor_Major_Triad_Ratio", B="F0env_sma_skewness", C="pcm_zcr_sma_skewness", AIC = 2765.313)
+GA_rel_Valence.OPT <- data.frame(A = character(), B = character(), C = character(), D = character(), AIC = numeric())
+
+for (i in 1:nrow(GA.rel_Valence1)) {
+  x <- as.vector(t(GA.rel_Valence1[i,]))
+  for (var in all_vars){
+    if (var != "Arousal" & var != "Valence" & var != x[1] & var != x[2] & var != x[3]){
+      V.formula <- as.formula(paste("Valence ~", paste(c(x[1], x[2], x[3], var), collapse= " + "),"+ (1 |Song2) + (1 |ID)"))
+      model.V <- lmer(formula=V.formula, data=all_features)
+      res <- summary(model.V)
+      if (AIC(model.V)<=x[4]){
+        new_row <- data.frame(x[1], x[2], x[3], var, AIC(model.V))
+        names(new_row) <- c("A", "B", "C", "D", "AIC")
+        GA_rel_Valence.OPT <- rbind(new_row, GA_rel_Valence.OPT)
+      }
+    }
+  }
+}
+GA_rel_Valence.OPT
+```
+
+We inspect the results of the new model (Model.2)
+
+```{r GA_Model2_multiple_regression_valence}
+model.V_GA.2 <- lmer(Valence ~ Minor_Major_Triad_Ratio + F0env_sma_skewness + pcm_zcr_sma_skewness + BPM + (1 |Song2) + (1 |ID), data=all_features)
+res <- summary(model.V_GA.2)
+res
+model.V_GA.2.AIC <- AIC(model.V_GA.2)
+model.V_GA.2.AIC
+```
+
+
+Search for adding a predictor that reduces AIC of Model.2
+
+```{r forward_selection_Valence2}
+df <- subset(all_features, select=-c(row_index, X1, ID, Song, Category, Song2, Arousal, Valence)) 
+all_vars <- colnames(df)
+
+GA.rel_Valence1 <- data.frame(A="Minor_Major_Triad_Ratio", B="F0env_sma_skewness", C="pcm_zcr_sma_skewness", D="BPM", AIC = 2764.619)
+GA_rel_Valence.OPT <- data.frame(A = character(), B = character(), C = character(), D = character(), E = character(), AIC = numeric())
+
+for (i in 1:nrow(GA.rel_Valence1)) {
+  x <- as.vector(t(GA.rel_Valence1[i,]))
+  for (var in all_vars){
+    if (var != "Arousal" & var != "Valence" & var != x[1] & var != x[2] & var != x[3] & var != x[4]){
+      V.formula <- as.formula(paste("Valence ~", paste(c(x[1], x[2], x[3], x[4], var), collapse= " + "),"+ (1 |Song2) + (1 |ID)"))
+      model.V <- lmer(formula=V.formula, data=all_features)
+      res <- summary(model.V)
+      if (AIC(model.V)<=x[5]){
+        new_row <- data.frame(x[1], x[2], x[3], x[4], var, AIC(model.V))
+        names(new_row) <- c("A", "B", "C", "D", "E", "AIC")
+        GA_rel_Valence.OPT <- rbind(new_row, GA_rel_Valence.OPT)
+      }
+    }
+  }
+}
+GA_rel_Valence.OPT
+```
+
+We inspect the results of the new model (Model.3)
+
+```{r GA_Model2_multiple_regression_valence}
+model.V_GA.3 <- lmer(Valence ~ Minor_Major_Triad_Ratio + F0env_sma_skewness + pcm_zcr_sma_skewness + BPM + Amount_of_Staccato + (1 |Song2) + (1 |ID), data=all_features)
+res <- summary(model.V_GA.3)
+res
+model.V_GA.3.AIC <- AIC(model.V_GA.3)
+model.V_GA.3.AIC
+```
+
+
+Search for adding a predictor that reduces AIC of Model.3
+
+```{r forward_selection_Valence3}
+df <- subset(all_features, select=-c(row_index, X1, ID, Song, Category, Song2, Arousal, Valence)) 
+all_vars <- colnames(df)
+
+GA.rel_Valence1 <- data.frame(A="Minor_Major_Triad_Ratio", B="F0env_sma_skewness", C="pcm_zcr_sma_skewness", D="BPM", E="Amount_of_Staccato", AIC = 2764.298)
+GA_rel_Valence.OPT <- data.frame(A = character(), B = character(), C = character(), D = character(), E = character(), G = character(), AIC = numeric())
+
+for (i in 1:nrow(GA.rel_Valence1)) {
+  x <- as.vector(t(GA.rel_Valence1[i,]))
+  for (var in all_vars){
+    if (var != "Arousal" & var != "Valence" & var != x[1] & var != x[2] & var != x[3] & var != x[4] & var != x[5]){
+      V.formula <- as.formula(paste("Valence ~", paste(c(x[1], x[2], x[3], x[4], x[5], var), collapse= " + "),"+ (1 |Song2) + (1 |ID)"))
+      model.V <- lmer(formula=V.formula, data=all_features)
+      res <- summary(model.V)
+      if (AIC(model.V)<=x[6]){
+        new_row <- data.frame(x[1], x[2], x[3], x[4], x[5], var, AIC(model.V))
+        names(new_row) <- c("A", "B", "C", "D", "E", "G", "AIC")
+        GA_rel_Valence.OPT <- rbind(new_row, GA_rel_Valence.OPT)
+      }
+    }
+  }
+}
+GA_rel_Valence.OPT
+```
+
+We inspect the results of the new model (Model.4)
+
+```{r GA_Model2_multiple_regression_valence}
+model.V_GA.4 <- lmer(Valence ~ Minor_Major_Triad_Ratio + F0env_sma_skewness + pcm_zcr_sma_skewness + BPM + Amount_of_Staccato + F0env_sma_linregerrQ + (1 |Song2) + (1 |ID), data=all_features)
+res <- summary(model.V_GA.4)
+res
+model.V_GA.4.AIC <- AIC(model.V_GA.4)
+model.V_GA.4.AIC
+```
+
+
+Search for adding a predictor that reduces AIC of Model.4
+
+```{r forward_selection_Valence4}
+df <- subset(all_features, select=-c(row_index, X1, ID, Song, Category, Song2, Arousal, Valence)) 
+all_vars <- colnames(df)
+
+GA.rel_Valence1 <- data.frame(A="Minor_Major_Triad_Ratio", B="F0env_sma_skewness", C="pcm_zcr_sma_skewness", D="BPM", E="Amount_of_Staccato", G="F0env_sma_linregerrQ", AIC = 2760.653)
+GA_rel_Valence.OPT <- data.frame(A = character(), B = character(), C = character(), D = character(), E = character(), G = character(), H = character(), AIC = numeric())
+
+for (i in 1:nrow(GA.rel_Valence1)) {
+  x <- as.vector(t(GA.rel_Valence1[i,]))
+  for (var in all_vars){
+    if (var != "Arousal" & var != "Valence" & var != x[1] & var != x[2] & var != x[3] & var != x[4] & var != x[5] & var != x[6]){
+      V.formula <- as.formula(paste("Valence ~", paste(c(x[1], x[2], x[3], x[4], x[5], x[6], var), collapse= " + "),"+ (1 |Song2) + (1 |ID)"))
+      model.V <- lmer(formula=V.formula, data=all_features)
+      res <- summary(model.V)
+      if (AIC(model.V)<=x[7]){
+        new_row <- data.frame(x[1], x[2], x[3], x[4], x[5], x[6], var, AIC(model.V))
+        names(new_row) <- c("A", "B", "C", "D", "E", "G", "H", "AIC")
+        GA_rel_Valence.OPT <- rbind(new_row, GA_rel_Valence.OPT)
+      }
+    }
+  }
+}
+GA_rel_Valence.OPT
+```
+
+We inspect the results of the new model (Model.5)
+
+```{r GA_Model2_multiple_regression_valence}
+model.V_GA.5 <- lmer(Valence ~ Minor_Major_Triad_Ratio + F0env_sma_skewness + pcm_zcr_sma_skewness + BPM + Amount_of_Staccato + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=all_features)
+res <- summary(model.V_GA.5)
+res
+model.V_GA.5.AIC <- AIC(model.V_GA.5)
+model.V_GA.5.AIC
+```
+
+
+Search for adding a predictor that reduces AIC of Model.5
+
+```{r forward_selection_Valence5}
+df <- subset(all_features, select=-c(row_index, X1, ID, Song, Category, Song2, Arousal, Valence)) 
+all_vars <- colnames(df)
+
+GA.rel_Valence1 <- data.frame(A="Minor_Major_Triad_Ratio", B="F0env_sma_skewness", C="pcm_zcr_sma_skewness", D="BPM", E="Amount_of_Staccato", G="F0env_sma_linregerrQ", H="Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized", IC = 2760.041)
+GA_rel_Valence.OPT <- data.frame(A = character(), B = character(), C = character(), D = character(), E = character(), G = character(), H = character(), I = character(), AIC = numeric())
+
+for (i in 1:nrow(GA.rel_Valence1)) {
+  x <- as.vector(t(GA.rel_Valence1[i,]))
+  for (var in all_vars){
+    if (var != "Arousal" & var != "Valence" & var != x[1] & var != x[2] & var != x[3] & var != x[4] & var != x[5] & var != x[6] & var != x[7]){
+      V.formula <- as.formula(paste("Valence ~", paste(c(x[1], x[2], x[3], x[4], x[5], x[6], x[7], var), collapse= " + "),"+ (1 |Song2) + (1 |ID)"))
+      model.V <- lmer(formula=V.formula, data=all_features)
+      res <- summary(model.V)
+      if (AIC(model.V)<=x[8]){
+        new_row <- data.frame(x[1], x[2], x[3], x[4], x[5], x[6], x[7], var, AIC(model.V))
+        names(new_row) <- c("A", "B", "C", "D", "E", "G", "H", "I", "AIC")
+        GA_rel_Valence.OPT <- rbind(new_row, GA_rel_Valence.OPT)
+      }
+    }
+  }
+}
+GA_rel_Valence.OPT
+```
+
+
+```{r Best.Model.Valence}
+Best.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + F0env_sma_skewness + pcm_zcr_sma_skewness + BPM + Amount_of_Staccato + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=all_features)
+res <- summary(Best.Model.V)
+res
+Best.Model.V.AIC <- AIC(Best.Model.V)
+Best.Model.V.AIC
+```
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+          CATEGORICAL ASSESSMENT    CATEGORICAL ASSESSMENT    CATEGORICAL ASSESSMENT    CATEGORICAL ASSESSMENT    CATEGORICAL ASSESSMENT
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+```{r lme_selected_features_amazement}
+library(nlme)
+library(lme4)
+amazement <- all_features[which(all_features$Category == "Amazement"),]
+
+amazement.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + pcm_zcr_sma_skewness + F0env_sma_linregerrQ + Median_Rhythmic_Value_Offset + pcm_zcr_sma_stddev + Non.Standard_Chords + (1 |Song2) + (1 |ID), data=amazement)
+res <- summary(amazement.Model.A)
+res
+amazement.Model.A.AIC <- AIC(amazement.Model.A)
+amazement.Model.A.AIC
+
+amazement.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + F0env_sma_skewness + pcm_zcr_sma_skewness + BPM + Amount_of_Staccato + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=amazement)
+res <- summary(amazement.Model.V)
+res
+amazement.Model.V.AIC <- AIC(amazement.Model.V)
+amazement.Model.V.AIC
+```
+
+
+```{r lme_selected_features_joy}
+Joy <- all_features[which(all_features$Category == "Joy"),]
+
+Joy.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + Median_Rhythmic_Value_Offset + pcm_zcr_sma_skewness + pcm_zcr_sma_stddev + F0env_sma_linregerrQ + Non.Standard_Chords + (1 |Song2) + (1 |ID), data=Joy)
+res <- summary(Joy.Model.A)
+res
+Joy.Model.A.AIC <- AIC(Joy.Model.A)
+Joy.Model.A.AIC
+
+Joy.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + pcm_zcr_sma_skewness + F0env_sma_skewness + F0env_sma_linregerrQ + Amount_of_Staccato + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + BPM + (1 |Song2) + (1 |ID), data=Joy)
+res <- summary(Joy.Model.V)
+res
+Joy.Model.V.AIC <- AIC(Joy.Model.V)
+Joy.Model.V.AIC
+```
+
+
+```{r lme_selected_features_activation}
+Activation <- all_features[which(all_features$Category == "Activation"),]
+
+Activation.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + Median_Rhythmic_Value_Offset + pcm_zcr_sma_skewness + pcm_zcr_sma_stddev + F0env_sma_linregerrQ + Non.Standard_Chords + (1 |Song2) + (1 |ID), data=Activation)
+res <- summary(Activation.Model.A)
+res
+Activation.Model.A.AIC <- AIC(Activation.Model.A)
+Activation.Model.A.AIC
+
+Activation.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + pcm_zcr_sma_skewness + F0env_sma_skewness + F0env_sma_linregerrQ + Amount_of_Staccato + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + BPM + (1 |Song2) + (1 |ID), data=Activation)
+res <- summary(Activation.Model.V)
+res
+Activation.Model.V.AIC <- AIC(Activation.Model.V)
+Activation.Model.V.AIC
+```
+
+
+```{r lme_selected_features_dysphoria}
+Dysphoria <- all_features[which(all_features$Category == "Dysphoria"),]
+
+Dysphoria.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + Median_Rhythmic_Value_Offset + pcm_zcr_sma_skewness + pcm_zcr_sma_stddev + F0env_sma_linregerrQ + Non.Standard_Chords + (1 |Song2) + (1 |ID), data=Dysphoria)
+res <- summary(Dysphoria.Model.A)
+res
+Dysphoria.Model.A.AIC <- AIC(Dysphoria.Model.A)
+Dysphoria.Model.A.AIC
+
+Dysphoria.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + pcm_zcr_sma_skewness + F0env_sma_skewness + F0env_sma_linregerrQ + Amount_of_Staccato + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + BPM + (1 |Song2) + (1 |ID), data=Dysphoria)
+res <- summary(Dysphoria.Model.V)
+res
+Dysphoria.Model.V.AIC <- AIC(Dysphoria.Model.V)
+Dysphoria.Model.V.AIC
+```
+
+
+```{r lme_selected_features_power}
+Power <- all_features[which(all_features$Category == "Power"),]
+
+Power.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + pcm_zcr_sma_skewness + F0env_sma_linregerrQ + Median_Rhythmic_Value_Offset + pcm_zcr_sma_stddev + Non.Standard_Chords + (1 |Song2) + (1 |ID), data=Power)
+res <- summary(Power.Model.A)
+res
+Power.Model.A.AIC <- AIC(Power.Model.A)
+Power.Model.A.AIC
+
+Power.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + F0env_sma_skewness + pcm_zcr_sma_skewness + BPM + Amount_of_Staccato + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=Power)
+res <- summary(Power.Model.V)
+res
+Power.Model.V.AIC <- AIC(Power.Model.V)
+Power.Model.V.AIC
+```
+
+
+```{r lme_selected_features_sadness}
+Sadness <- all_features[which(all_features$Category == "Sadness"),]
+
+Sadness.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + pcm_zcr_sma_skewness + F0env_sma_linregerrQ + Median_Rhythmic_Value_Offset + pcm_zcr_sma_stddev + Non.Standard_Chords + (1 |Song2) + (1 |ID), data=Sadness)
+res <- summary(Sadness.Model.A)
+res
+Sadness.Model.A.AIC <- AIC(Sadness.Model.A)
+Sadness.Model.A.AIC
+
+Sadness.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + F0env_sma_skewness + pcm_zcr_sma_skewness + BPM + Amount_of_Staccato + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=Sadness)
+res <- summary(Sadness.Model.V)
+res
+Sadness.Model.V.AIC <- AIC(Sadness.Model.V)
+Sadness.Model.V.AIC
+```
+
+
+```{r lme_selected_features_sensuality}
+Sensuality <- all_features[which(all_features$Category == "Sensuality"),]
+
+Sensuality.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + pcm_zcr_sma_skewness + F0env_sma_linregerrQ + Median_Rhythmic_Value_Offset + pcm_zcr_sma_stddev + Non.Standard_Chords + (1 |Song2) + (1 |ID), data=Sensuality)
+res <- summary(Sensuality.Model.A)
+res
+Sensuality.Model.A.AIC <- AIC(Sensuality.Model.A)
+Sensuality.Model.A.AIC
+
+Sensuality.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + F0env_sma_skewness + pcm_zcr_sma_skewness + BPM + Amount_of_Staccato + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=Sensuality)
+res <- summary(Sensuality.Model.V)
+res
+Sensuality.Model.V.AIC <- AIC(Sensuality.Model.V)
+Sensuality.Model.V.AIC
+```
+
+
+```{r lme_selected_features_TenderLonging}
+TenderLonging <- all_features[which(all_features$Category == "TenderLonging"),]
+
+TenderLonging.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + pcm_zcr_sma_skewness + F0env_sma_linregerrQ + Median_Rhythmic_Value_Offset + pcm_zcr_sma_stddev + Non.Standard_Chords + (1 |Song2) + (1 |ID), data=TenderLonging)
+res <- summary(TenderLonging.Model.A)
+res
+TenderLonging.Model.A.AIC <- AIC(TenderLonging.Model.A)
+TenderLonging.Model.A.AIC
+
+TenderLonging.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + F0env_sma_skewness + pcm_zcr_sma_skewness + BPM + Amount_of_Staccato + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=TenderLonging)
+res <- summary(TenderLonging.Model.V)
+res
+TenderLonging.Model.V.AIC <- AIC(TenderLonging.Model.V)
+TenderLonging.Model.V.AIC
+```
+
+
+```{r lme_selected_features_Tranquility}
+Tranquility <- all_features[which(all_features$Category == "Tranquility"),]
+
+Tranquility.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + Median_Rhythmic_Value_Offset + pcm_zcr_sma_skewness + pcm_zcr_sma_stddev + F0env_sma_linregerrQ + Non.Standard_Chords + (1 |Song2) + (1 |ID), data=Tranquility)
+res <- summary(Tranquility.Model.A)
+res
+Tranquility.Model.A.AIC <- AIC(Tranquility.Model.A)
+Tranquility.Model.A.AIC
+
+Tranquility.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + pcm_zcr_sma_skewness + F0env_sma_skewness + F0env_sma_linregerrQ + Amount_of_Staccato + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + BPM + (1 |Song2) + (1 |ID), data=Tranquility)
+res <- summary(Tranquility.Model.V)
+res
+Tranquility.Model.V.AIC <- AIC(Tranquility.Model.V)
+Tranquility.Model.V.AIC
+```
+
+
+```{r lme_selected_features_Transcendence}
+Transcendence <- all_features[which(all_features$Category == "Transcendence"),]
+
+Transcendence.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + pcm_zcr_sma_skewness + F0env_sma_linregerrQ + Median_Rhythmic_Value_Offset + pcm_zcr_sma_stddev + Non.Standard_Chords + (1 |Song2) + (1 |ID), data=Transcendence)
+res <- summary(Transcendence.Model.A)
+res
+Transcendence.Model.A.AIC <- AIC(Transcendence.Model.A)
+Transcendence.Model.A.AIC
+
+Transcendence.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + F0env_sma_skewness + pcm_zcr_sma_skewness + BPM + Amount_of_Staccato + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=Transcendence)
+res <- summary(Transcendence.Model.V)
+res
+Transcendence.Model.V.AIC <- AIC(Transcendence.Model.V)
+Transcendence.Model.V.AIC
+```
