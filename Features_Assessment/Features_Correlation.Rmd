@@ -20,7 +20,7 @@ results.Valence <- data.frame(FEATURE = character(), PEARSON.cor = numeric(), SP
 
 for (dim in c("A_mean", "V_mean")){
   for (feature in colnames(GS_data)){
-    if (feature != dim & feature != "Song" & feature != "Song2" & feature != "EWE_A" & feature != "EWE_V" & feature != "X1" & feature != "Category"){
+    if (feature != dim & feature != "Song" & feature != "Song2" & feature != "EWE_A" & feature != "EWE_V" & feature != "X1" & feature != "Category" & feature != "Q_EWE" & feature != "Q_mean"){
       Pcor.val = cor(GS_data[,dim], GS_data[,feature], method="pearson")
       Scor.val = cor(GS_data[,dim], GS_data[,feature], method="spearman")
       Kcor.val = cor(GS_data[,dim], GS_data[,feature], method="kendall")
@@ -48,7 +48,7 @@ results.Valence <- data.frame(FEATURE = character(), PEARSON.cor = numeric(), SP
 
 for (dim in c("EWE_A", "EWE_V")){
   for (feature in colnames(GS_data)){
-    if (feature != dim & feature != "Song" & feature != "Song2" & feature != "A_mean" & feature != "V_mean" & feature != "X1" & feature != "Category"){
+    if (feature != dim & feature != "Song" & feature != "Song2" & feature != "A_mean" & feature != "V_mean" & feature != "X1" & feature != "Category" & feature != "Q_EWE" & feature != "Q_mean"){
       Pcor.val = cor(GS_data[,dim], GS_data[,feature], method="pearson")
       Scor.val = cor(GS_data[,dim], GS_data[,feature], method="spearman")
       Kcor.val = cor(GS_data[,dim], GS_data[,feature], method="kendall")
