@@ -30,19 +30,29 @@ def get_data(my_dir):
     y_col = y_col.replace('Activation', 4)
     y = y_col.values
     x = df.iloc[:-1, 10:]
-    #A_selection_Cor = ["Most_Common_Rhythmic_Value", "Number_of_Strong_Rhythmic_Pulses_-_Tempo_Standardized", "BPM", "pcm_zcr_sma_skewness", "Note_Density", "Standard_Triads", "Melodic_Large_Intervals", "Most_Common_Vertical_Interval", "Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_-_Tempo_Standardized", "pcm_intensity_sma_min", "Prevalence_of_Dotted_Notes"]
-    #V_selection_Cor = ["F0env_sma_quartile3", "Minor_Major_Triad_Ratio", "Minor_Major_Melodic_Third_Ratio", "F0env_sma_skewness", "pcm_intensity_sma_minPos", "Similar_Motion", "Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_-_Tempo_Standardized", "Diminished_and_Augmented_Triads", "Dynamic_Range", "Non-Standard_Chords", "pcm_zcr_sma_skewness"]
-    #A_selection_LR = ["Most_Common_Rhythmic_Value", "Number_of_Strong_Rhythmic_Pulses_-_Tempo_Standardized", "Median_Rhythmic_Value_Offset", "pcm_zcr_sma_skewness", "pcm_zcr_sma_stddev", "F0env_sma_linregerrQ", "Non-Standard_Chords"]
-    #V_selection_LR = ["Minor_Major_Triad_Ratio", "pcm_zcr_sma_skewness", "F0env_sma_skewness", "F0env_sma_linregerrQ", "Amount_of_Staccato", "Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_-_Tempo_Standardized", "BPM"]
-    A_selection_Union = ["Most_Common_Rhythmic_Value", "Number_of_Strong_Rhythmic_Pulses_-_Tempo_Standardized", "pcm_zcr_sma_skewness", "BPM", "Note_Density", "Standard_Triads", "Melodic_Large_Intervals", "Most_Common_Vertical_Interval", "Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_-_Tempo_Standardized", "pcm_intensity_sma_min", "Prevalence_of_Dotted_Notes", "Median_Rhythmic_Value_Offset", "pcm_zcr_sma_stddev", "F0env_sma_linregerrQ", "Non-Standard_Chords"]
-    V_selection_Union = ["Minor_Major_Triad_Ratio", "pcm_zcr_sma_skewness", "F0env_sma_skewness", "F0env_sma_linregerrQ", "Amount_of_Staccato", "Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_-_Tempo_Standardized", "BPM", "Dynamic_Range", "Non-Standard_Chords", "F0env_sma_quartile3", "Minor_Major_Melodic_Third_Ratio", "pcm_intensity_sma_minPos", "Similar_Motion", "Diminished_and_Augmented_Triads"]
+    A_selection_Cor = ["Most_Common_Rhythmic_Value", "Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized", "BPM", "pcm_zcr_sma_skewness", "Note_Density", "Standard_Triads", "Melodic_Large_Intervals", "Most_Common_Vertical_Interval", "Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized", "pcm_intensity_sma_min", "Prevalence_of_Dotted_Notes"]
+    V_selection_Cor = ["F0env_sma_quartile3", "Minor_Major_Triad_Ratio", "Minor_Major_Melodic_Third_Ratio", "F0env_sma_skewness", "pcm_intensity_sma_minPos", "Similar_Motion", "Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized", "Diminished_and_Augmented_Triads", "Dynamic_Range", "Non.Standard_Chords", "pcm_zcr_sma_skewness"]
+    A_selection_LR = ["Most_Common_Rhythmic_Value", "Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized", "Median_Rhythmic_Value_Offset", "pcm_zcr_sma_skewness", "pcm_zcr_sma_stddev", "F0env_sma_linregerrQ", "Non.Standard_Chords"]
+    V_selection_LR = ["Minor_Major_Triad_Ratio", "pcm_zcr_sma_skewness", "F0env_sma_skewness", "F0env_sma_linregerrQ", "Amount_of_Staccato", "Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized", "BPM"]
+
+    A_selection_Union = A_selection_Cor.copy()
+    for elem in A_selection_LR:
+        if elem not in A_selection_Union:
+            A_selection_Union.append(elem)
+    V_selection_Union = V_selection_Cor.copy()
+    for elem in V_selection_LR:
+        if elem not in V_selection_Union:
+            V_selection_Union.append(elem)
 
     A_selection = A_selection_Union
     V_selection = V_selection_Union
 
     A_selection_index = [x.columns.get_loc(c) for c in A_selection if c in x]  # get indexes of selected features
     V_selection_index = [x.columns.get_loc(c) for c in V_selection if c in x]
-    all_selection_index = A_selection_index + V_selection_index
+    all_selection_index = A_selection_index.copy()
+    for elem in V_selection_index:
+        if elem not in all_selection_index:
+            all_selection_index.append(elem)
     return df, A_mean, V_mean, A_EWE, V_EWE, y, x, A_selection_index, V_selection_index, all_selection_index
 
 
@@ -143,6 +153,7 @@ def MLP(x_train, y_train, x_test, SELarousal_test, SELarousal_train, SELvalence_
     predictions = neural_network.MLPClassifier(random_state=0, batch_size=8, hidden_layer_sizes=(25,25)).fit(SELall_train, y_train).predict(SELall_test)
     pred[:,3] = predictions
     mean_UAR_SELall, mean_WAR_SELall, mean_cm_SELall = evaluation(predictions, y_test, mean_UAR_SELall, mean_WAR_SELall, mean_cm_SELall)
+    print(SELall_test.shape[1], ' features in A+V set')
     return mean_UAR_all, mean_WAR_all, mean_cm_all, mean_UAR_A, mean_WAR_A, mean_cm_A, mean_UAR_V, mean_WAR_V, mean_cm_V, mean_UAR_SELall, mean_WAR_SELall, mean_cm_SELall, pred
 
 
@@ -261,4 +272,3 @@ if __name__ == "__main__":
         average_UAR_all, average_mean_cm_all, average_UAR_V, average_mean_cm_V, average_UAR_A, average_mean_cm_A, average_UAR_SELall, average_mean_cm_SELall = add_average_results(average_UAR_all, average_mean_cm_all, average_UAR_V, average_mean_cm_V, average_UAR_A, average_mean_cm_A, average_UAR_SELall, average_mean_cm_SELall, mean_UAR_all, mean_cm_all, mean_UAR_A, mean_cm_A, mean_UAR_V, mean_cm_V, mean_UAR_SELall, mean_cm_SELall)
     classifier = "MAJORITY"
     print_function(classifier, average_UAR_all, average_mean_cm_all, average_UAR_A, average_mean_cm_A, average_UAR_V, average_mean_cm_V, average_UAR_SELall, average_mean_cm_SELall, 5)
-
