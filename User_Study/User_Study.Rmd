@@ -71,9 +71,17 @@ for (i in seq_along(categories)) {
 }
 ```
 
+```{r Bonferroni_adjustment}
+adjusted_p_arousal <- p.adjust(0.0119, method = "bonferroni", n = 24)
+adjusted_p_arousal
+adjusted_p_valence <- p.adjust(0.0147, method = "bonferroni", n = 24)
+adjusted_p_valence
+```
+
+
 ----------------------------------------------------------------------------------------------------------
 Neither likeness nor musical background play a role in listeners perception of Arousal and Valence overall
-                        is confirmed for the withing song evaluation (as p > .01)
+                        is confirmed for the withing song evaluation (as p > .2856)
 ----------------------------------------------------------------------------------------------------------
 
 
@@ -85,7 +93,7 @@ Neither likeness nor musical background play a role in listeners perception of A
 ```{r ML_dimensions_all:data}
 LM <- lm(Valence ~ Arousal, data=annotations)
 summary(LM)
-sqrt(0.06267)
+sqrt(0.07842)
 plot(LM)
 
 library(ggplot2)
@@ -96,7 +104,7 @@ ggplot(annotations, aes(x = Valence, y = Arousal)) +
 ```
 
 ----------------------------------------------------------------------------------------------------------
-    There is a positive relationship between both dimensions. Still, the correlation is low (r=0.25)
+    There is a positive relationship between both dimensions. Still, the correlation is low (r=0.28)
 ----------------------------------------------------------------------------------------------------------
 
 
@@ -159,12 +167,23 @@ for (i in seq_along(categories)) {
 ```
 
 
+```{r Bonferroni_adjustment2}
+adjusted_p_tender <- p.adjust(0.03458, method = "bonferroni", n = 10)
+adjusted_p_tender
+adjusted_p_sensuality <- p.adjust(0.00459, method = "bonferroni", n = 10)
+adjusted_p_sensuality
+adjusted_p_tranquility <- p.adjust(0.0018, method = "bonferroni", n = 10)
+adjusted_p_tranquility
+```
+
+
+
 ```{r ML_dimensions_positive:emotions}
-positive_list <- c("Amazement", "Joy", "Sensuality", "TenderLonging", "Tranquility")
+positive_list <- c("Amazement", "Joy", "sensuality", "Tranquility")
 positive_selection <- annotations[which(annotations$Category %in% positive_list),]
 model.pos <- lm(Valence ~ Arousal, data=positive_selection)
 summary(model.pos)
-sqrt(0.19)
+sqrt(0.23)
 plot(model.pos)
 
 library(ggplot2)
@@ -176,16 +195,16 @@ ggplot(positive_selection, aes(x = Valence, y = Arousal)) +
 
 ----------------------------------------------------------------------------------------------------------
         For positive emotions there is a moderate positive relationship between both dimensions. 
-                                   Pearson correlation coefficient (r=0.43)
+                                   Pearson correlation coefficient (r=0.48)
 ----------------------------------------------------------------------------------------------------------
 
 
 ```{r ML_dimensions_positive:emotions}
-negative_new_list <- c("Activation", "Dysphoria", "Sadness", "Power", "Transcendence")
+negative_new_list <- c("Activation", "Dysphoria", "Sadness", "Power", "Transcendence", "TenderLonging")
 negative_neu_selection <- annotations[which(annotations$Category %in% negative_new_list),]
 model.neg <- lm(Valence ~ Arousal, data=negative_neu_selection)
 summary(model.neg)
-sqrt(0.0618)
+sqrt(0.07)
 plot(model.neg)
 
 library(ggplot2)
@@ -197,6 +216,6 @@ ggplot(negative_neu_selection, aes(x = Valence, y = Arousal)) +
 
 ----------------------------------------------------------------------------------------------------------
       For negative/neutral emotions there is a low positive relationship between both dimensions. 
-                              Pearson correlation coefficient (r=0.24)
+                              Pearson correlation coefficient (r=0.26)
 ----------------------------------------------------------------------------------------------------------
 

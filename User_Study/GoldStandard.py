@@ -9,7 +9,7 @@ from collections import Counter
 
 def get_data(my_dir):
     annotations_df = pd.read_csv(my_dir + '/annotations.csv')
-    features_df = pd.read_csv(my_dir + '/mean_df.csv')
+    features_df = pd.read_csv(my_dir + '/features.csv')
     return annotations_df, features_df
 
 
@@ -99,8 +99,10 @@ def rename_songs(GS_dic):
 
 def get_Q(GS_dic, string_A, string_V, string_Q):
     Q = []
-    mean_A = np.mean([min(GS_dic[string_A]), max(GS_dic[string_A])])
-    mean_V = np.mean([min(GS_dic[string_V]), max(GS_dic[string_V])])
+    #mean_A = np.mean([min(GS_dic[string_A]), max(GS_dic[string_A])])
+    #mean_V = np.mean([min(GS_dic[string_V]), max(GS_dic[string_V])])
+    mean_A = 2
+    mean_V = 0
     for index, rating in enumerate(GS_dic[string_A]):
         if rating > mean_A and GS_dic[string_V][index] > mean_V:
             Q.append('Q1')
@@ -127,7 +129,6 @@ if __name__ == "__main__":
 
     df_labels = pd.DataFrame.from_dict(GS_dic)
     print(df_labels)
-    features_df = features_df.drop(['Unnamed: 0', 'Arousal', 'Valence'], axis=1)
     print(features_df)
     Gold_Standard = pd.merge(df_labels, features_df, on='Song', how='inner')
     first_column = Gold_Standard.pop('Song')
