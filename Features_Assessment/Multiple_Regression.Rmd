@@ -716,3 +716,10 @@ res
 Transcendence.Model.V.AIC <- AIC(Transcendence.Model.V)
 Transcendence.Model.V.AIC
 ```
+
+
+
+```{r Bonferroni_adjustment2}
+adjusted_p <- p.adjust(0.949, method = "bonferroni", n = 10)
+adjusted_p
+```
