@@ -33,7 +33,7 @@ def get_data(my_dir):
     y_col = y_col.replace('Q4', 3)
     y = y_col.values
     x = df.iloc[:, 1:]
-    A_selection_Cor = ["Most_Common_Rhythmic_Value", "Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized", "BPM", "pcm_zcr_sma_skewness", "Note_Density", "Standard_Triads", "Melodic_Large_Intervals", "Most_Common_Vertical_Interval", "Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized", "Prevalence_of_Dotted_Notes"]
+    A_selection_Cor = ["Most_Common_Rhythmic_Value", "Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized", "BPM", "pcm_zcr_sma_skewness", "Note_Density", "Standard_Triads", "Melodic_Large_Intervals", "Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized", "Prevalence_of_Dotted_Notes"]
     V_selection_Cor = ["F0env_sma_quartile3", "Minor_Major_Triad_Ratio", "Minor_Major_Melodic_Third_Ratio", "F0env_sma_skewness", "pcm_intensity_sma_minPos", "Similar_Motion", "Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized", "Diminished_and_Augmented_Triads", "Dynamic_Range"]
     A_selection_LR = ["Most_Common_Rhythmic_Value", "Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized", "Median_Rhythmic_Value_Offset", "pcm_zcr_sma_skewness", "pcm_zcr_sma_stddev", "F0env_sma_linregerrQ"]
     V_selection_LR = ["Minor_Major_Triad_Ratio", "pcm_zcr_sma_skewness", "F0env_sma_skewness", "F0env_sma_linregerrQ", "Amount_of_Staccato", "Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized", "BPM"]
