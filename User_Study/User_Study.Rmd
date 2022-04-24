@@ -121,12 +121,14 @@ describeBy(annotations, group=annotations$Category)
 
 
 ```{r PLOTS_emo}
+annotations[annotations == "TenderLonging"] <- "Tenderness"
+
 lapply(annotations[, c("Category", "Arousal")], table)
 ftable(xtabs(~ Category + Arousal, data = annotations))
 
 library(ggplot2)
 arousal.plot <- ggplot(annotations, aes(x = Arousal, y = Category)) +
-  geom_boxplot(size = .75) +
+  geom_boxplot(size = 1) +
   geom_jitter(alpha = .5) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 arousal.plot
@@ -138,13 +140,34 @@ lapply(annotations[, c("Category", "Valence")], table)
 ftable(xtabs(~ Category + Valence, data = annotations))
 
 valence.plot <- ggplot(annotations, aes(x = Valence, y = Category)) +
-  geom_boxplot(size = .75) +
-  geom_jitter(alpha = .5) +
+  geom_boxplot(size = 1, notch=FALSE) +   geom_jitter(alpha = .5) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 valence.plot
 pdf("valence.pdf", width=5, height=3)
 print(valence.plot)
 dev.off()
+```
+
+
+```{r PLOT2_emo}
+#annotations[annotations == "TenderLonging"] <- "Tenderness"
+
+lapply(annotations[, c("Category", "Arousal")], table)
+ftable(xtabs(~ Category + Arousal, data = annotations))
+
+library(ggplot2)
+ggplot(annotations, aes(x = Arousal, y = Category))  +
+  geom_boxplot(size = 1, width=0.5, length=0.5, notch=TRUE, outlier.size=0.5) +   #geom_jitter(alpha = .5) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size=12), axis.text.y = element_text(size=12, color="black"), axis.title.x = element_text(size=13, face="bold"),
+  plot.margin = margin(1, 10, 1, 1, "cm"))
+
+lapply(annotations[, c("Category", "Valence")], table)
+ftable(xtabs(~ Category + Valence, data = annotations))
+
+ggplot(annotations, aes(x = Valence, y = Category)) +
+  geom_boxplot(size = 1, width=0.5, length=0.5, notch=TRUE, outlier.size=0.5) +   #geom_jitter(alpha = .5) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size=12), axis.text.y = element_text(size=12, color="black"), axis.title.x = element_text(size=13, face="bold"),
+  plot.margin = margin(1, 10, 1, 1, "cm"))
 ```
 
 
