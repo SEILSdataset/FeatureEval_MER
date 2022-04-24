@@ -538,6 +538,20 @@ Best.Model.V.AIC
 ```
 
 
+```{r Plts_best_models}
+#install.packages("reshape")
+#install.packages("coefplot2",repos="http://www.math.mcmaster.ca/bolker/R",
+#type="source")
+#library(coefplot2)
+Best.Model.A <- lmer(Arousal ~ pcm_zcr_sma_skewness + pcm_zcr_sma_stddev + F0env_sma_linregerrQ + Most_Common_Rhythmic_Value + Median_Rhythmic_Value_Offset + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=all_features)
+Best.Model.V <- lmer(Valence ~ pcm_zcr_sma_skewness + F0env_sma_skewness + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + BPM + Amount_of_Staccato + Minor_Major_Triad_Ratio + (1 |Song2) + (1 |ID), data=all_features)
+A.names <- c("ZCR skewness", "ZCR stdev", "F0 linregerrQ", "Common Rhythm", "Rhythm Offset", "N. Strong Pulses")
+V.names <- c("ZCR skewness", "F0 skewness", "F0 linregerrQ", "       Rat. Strong Pulses", "BPM", "Staccato", "m/M Triad Rat.")
+
+coefplot2(Best.Model.A, col.pts = "blue", varnames=A.names, xlim=c(-1,1), main='All observations', cex.var=1.5, cex.main=1.5, cex.pts=1.1, mar=c(0,12,7,0))
+coefplot2(Best.Model.V, col.pts = "blue", varnames=V.names, xlim=c(-1,1), main='All observations', cex.var=1.5, cex.main=1.5, cex.pts=1.1, mar=c(0,12,7,0))
+```
+
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -546,9 +560,107 @@ Best.Model.V.AIC
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
+```{r lme_selected_features_joy}
+Joy <- all_features[which(all_features$Category == "Joy"),]
+
+Joy.Model.A <- lmer(Arousal ~ pcm_zcr_sma_skewness + pcm_zcr_sma_stddev + F0env_sma_linregerrQ + Most_Common_Rhythmic_Value + Median_Rhythmic_Value_Offset + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=Joy)
+res <- summary(Joy.Model.A)
+res
+Joy.Model.A.AIC <- AIC(Joy.Model.A)
+Joy.Model.A.AIC
+coefplot2(Joy.Model.A, col.pts = "blue", varnames=A.names, xlim=c(-1,1), main='Joy', cex.var=1.5, cex.main=1.5, cex.pts=1.1, mar=c(0,12,7,0))
+
+Joy.Model.V <- lmer(Valence ~ pcm_zcr_sma_skewness + F0env_sma_skewness + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + BPM + Amount_of_Staccato + Minor_Major_Triad_Ratio + (1 |Song2) + (1 |ID), data=Joy)
+res <- summary(Joy.Model.V)
+res
+Joy.Model.V.AIC <- AIC(Joy.Model.V)
+Joy.Model.V.AIC
+coefplot2(Joy.Model.V, col.pts = "blue", varnames=V.names, xlim=c(-1,1), main='Joy', cex.var=1.5, cex.main=1.5, cex.pts=1.1, mar=c(0,12,7,0))
+```
+
+
+```{r lme_selected_features_dysphoria}
+Dysphoria <- all_features[which(all_features$Category == "Dysphoria"),]
+
+Dysphoria.Model.A <- lmer(Arousal ~ pcm_zcr_sma_skewness + pcm_zcr_sma_stddev + F0env_sma_linregerrQ + Most_Common_Rhythmic_Value + Median_Rhythmic_Value_Offset + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=Dysphoria)
+res <- summary(Dysphoria.Model.A)
+res
+Dysphoria.Model.A.AIC <- AIC(Dysphoria.Model.A)
+Dysphoria.Model.A.AIC
+coefplot2(Dysphoria.Model.A, col.pts = "blue", varnames=A.names, xlim=c(-1,1), main='Dysphoria', cex.var=1.5, cex.main=1.5, cex.pts=1.1, mar=c(0,12,7,0))
+
+Dysphoria.Model.V <- lmer(Valence ~ pcm_zcr_sma_skewness + F0env_sma_skewness + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + BPM + Amount_of_Staccato + Minor_Major_Triad_Ratio + (1 |Song2) + (1 |ID), data=Dysphoria)
+res <- summary(Dysphoria.Model.V)
+res
+Dysphoria.Model.V.AIC <- AIC(Dysphoria.Model.V)
+Dysphoria.Model.V.AIC
+coefplot2(Dysphoria.Model.V, col.pts = "blue", varnames=V.names, xlim=c(-1,1), main='Dysphoria', cex.var=1.5, cex.main=1.5, cex.pts=1.1, mar=c(0,12,7,0))
+```
+
+
+```{r lme_selected_features_sadness}
+Sadness <- all_features[which(all_features$Category == "Sadness"),]
+
+Sadness.Model.A <- lmer(Arousal ~ pcm_zcr_sma_skewness + pcm_zcr_sma_stddev + F0env_sma_linregerrQ + Most_Common_Rhythmic_Value + Median_Rhythmic_Value_Offset + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=Sadness)
+res <- summary(Sadness.Model.A)
+res
+Sadness.Model.A.AIC <- AIC(Sadness.Model.A)
+Sadness.Model.A.AIC
+coefplot2(Sadness.Model.A, col.pts = "blue", varnames=A.names, xlim=c(-1,1), main='Sadness', cex.var=1.5, cex.main=1.5, cex.pts=1.1, mar=c(0,12,7,0))
+
+Sadness.Model.V <- lmer(Valence ~ pcm_zcr_sma_skewness + F0env_sma_skewness + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + BPM + Amount_of_Staccato + Minor_Major_Triad_Ratio + (1 |Song2) + (1 |ID), data=Sadness)
+res <- summary(Sadness.Model.V)
+res
+Sadness.Model.V.AIC <- AIC(Sadness.Model.V)
+Sadness.Model.V.AIC
+coefplot2(Sadness.Model.V, col.pts = "blue", varnames=V.names, xlim=c(-1,1), main='Sadness', cex.var=1.5, cex.main=1.5, cex.pts=1.1, mar=c(0,12,7,0))
+```
+
+
+```{r lme_selected_features_Tranquility}
+Tranquility <- all_features[which(all_features$Category == "Tranquility"),]
+
+Tranquility.Model.A <- lmer(Arousal ~ pcm_zcr_sma_skewness + pcm_zcr_sma_stddev + F0env_sma_linregerrQ + Most_Common_Rhythmic_Value + Median_Rhythmic_Value_Offset + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=Tranquility)
+res <- summary(Tranquility.Model.A)
+res
+Tranquility.Model.A.AIC <- AIC(Tranquility.Model.A)
+Tranquility.Model.A.AIC
+coefplot2(Tranquility.Model.A, col.pts = "blue", varnames=A.names, xlim=c(-1,1), main='Tranquility', cex.var=1.5, cex.main=1.5, cex.pts=1.1, mar=c(0,12,7,0))
+
+Tranquility.Model.V <- lmer(Valence ~ pcm_zcr_sma_skewness + F0env_sma_skewness + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + BPM + Amount_of_Staccato + Minor_Major_Triad_Ratio + (1 |Song2) + (1 |ID), data=Tranquility)
+res <- summary(Tranquility.Model.V)
+res
+Tranquility.Model.V.AIC <- AIC(Tranquility.Model.V)
+Tranquility.Model.V.AIC
+coefplot2(Tranquility.Model.V, col.pts = "blue", varnames=V.names, xlim=c(-1,1), main='Tranquility', cex.var=1.5, cex.main=1.5, cex.pts=1.1, mar=c(0,12,7,0))
+```
+
+
+```{r lme_selected_features_activation}
+Activation <- all_features[which(all_features$Category == "Activation"),]
+
+Activation.Model.A <- lmer(Arousal ~ pcm_zcr_sma_skewness + pcm_zcr_sma_stddev + F0env_sma_linregerrQ + Most_Common_Rhythmic_Value + Median_Rhythmic_Value_Offset + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=Activation)
+res <- summary(Activation.Model.A)
+res
+Activation.Model.A.AIC <- AIC(Activation.Model.A)
+Activation.Model.A.AIC
+coefplot2(Activation.Model.A, col.pts = "blue", varnames=A.names, xlim=c(-1,1), main='Activation', cex.var=1.5, cex.main=1.5, cex.pts=1.1, mar=c(0,12,7,0))
+
+Activation.Model.V <- lmer(Valence ~ pcm_zcr_sma_skewness + F0env_sma_skewness + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + BPM + Amount_of_Staccato + Minor_Major_Triad_Ratio + (1 |Song2) + (1 |ID), data=Activation)
+res <- summary(Activation.Model.V)
+res
+Activation.Model.V.AIC <- AIC(Activation.Model.V)
+Activation.Model.V.AIC
+coefplot2(Activation.Model.V, col.pts = "blue", varnames=V.names, xlim=c(-1,1), main='Activation', cex.var=1.5, cex.main=1.5, cex.pts=1.1, mar=c(0,12,7,0))
+```
+
+
+
+
 ```{r lme_selected_features_amazement}
 library(nlme)
 library(lme4)
+library(lmerTest)
 amazement <- all_features[which(all_features$Category == "Amazement"),]
 
 amazement.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + pcm_zcr_sma_skewness + F0env_sma_linregerrQ + Median_Rhythmic_Value_Offset + pcm_zcr_sma_stddev + (1 |Song2) + (1 |ID), data=amazement)
@@ -563,58 +675,6 @@ res
 amazement.Model.V.AIC <- AIC(amazement.Model.V)
 amazement.Model.V.AIC
 ```
-
-
-```{r lme_selected_features_joy}
-Joy <- all_features[which(all_features$Category == "Joy"),]
-
-Joy.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + Median_Rhythmic_Value_Offset + pcm_zcr_sma_skewness + pcm_zcr_sma_stddev + F0env_sma_linregerrQ + (1 |Song2) + (1 |ID), data=Joy)
-res <- summary(Joy.Model.A)
-res
-Joy.Model.A.AIC <- AIC(Joy.Model.A)
-Joy.Model.A.AIC
-
-Joy.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + pcm_zcr_sma_skewness + F0env_sma_skewness + F0env_sma_linregerrQ + Amount_of_Staccato + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + BPM + (1 |Song2) + (1 |ID), data=Joy)
-res <- summary(Joy.Model.V)
-res
-Joy.Model.V.AIC <- AIC(Joy.Model.V)
-Joy.Model.V.AIC
-```
-
-
-```{r lme_selected_features_activation}
-Activation <- all_features[which(all_features$Category == "Activation"),]
-
-Activation.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + Median_Rhythmic_Value_Offset + pcm_zcr_sma_skewness + pcm_zcr_sma_stddev + F0env_sma_linregerrQ + (1 |Song2) + (1 |ID), data=Activation)
-res <- summary(Activation.Model.A)
-res
-Activation.Model.A.AIC <- AIC(Activation.Model.A)
-Activation.Model.A.AIC
-
-Activation.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + pcm_zcr_sma_skewness + F0env_sma_skewness + F0env_sma_linregerrQ + Amount_of_Staccato + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + BPM + (1 |Song2) + (1 |ID), data=Activation)
-res <- summary(Activation.Model.V)
-res
-Activation.Model.V.AIC <- AIC(Activation.Model.V)
-Activation.Model.V.AIC
-```
-
-
-```{r lme_selected_features_dysphoria}
-Dysphoria <- all_features[which(all_features$Category == "Dysphoria"),]
-
-Dysphoria.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + Median_Rhythmic_Value_Offset + pcm_zcr_sma_skewness + pcm_zcr_sma_stddev + F0env_sma_linregerrQ + (1 |Song2) + (1 |ID), data=Dysphoria)
-res <- summary(Dysphoria.Model.A)
-res
-Dysphoria.Model.A.AIC <- AIC(Dysphoria.Model.A)
-Dysphoria.Model.A.AIC
-
-Dysphoria.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + pcm_zcr_sma_skewness + F0env_sma_skewness + F0env_sma_linregerrQ + Amount_of_Staccato + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + BPM + (1 |Song2) + (1 |ID), data=Dysphoria)
-res <- summary(Dysphoria.Model.V)
-res
-Dysphoria.Model.V.AIC <- AIC(Dysphoria.Model.V)
-Dysphoria.Model.V.AIC
-```
-
 
 ```{r lme_selected_features_power}
 Power <- all_features[which(all_features$Category == "Power"),]
@@ -632,24 +692,6 @@ Power.Model.V.AIC <- AIC(Power.Model.V)
 Power.Model.V.AIC
 ```
 
-
-```{r lme_selected_features_sadness}
-Sadness <- all_features[which(all_features$Category == "Sadness"),]
-
-Sadness.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + pcm_zcr_sma_skewness + F0env_sma_linregerrQ + Median_Rhythmic_Value_Offset + pcm_zcr_sma_stddev + (1 |Song2) + (1 |ID), data=Sadness)
-res <- summary(Sadness.Model.A)
-res
-Sadness.Model.A.AIC <- AIC(Sadness.Model.A)
-Sadness.Model.A.AIC
-
-Sadness.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + F0env_sma_skewness + pcm_zcr_sma_skewness + BPM + Amount_of_Staccato + F0env_sma_linregerrQ + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + (1 |Song2) + (1 |ID), data=Sadness)
-res <- summary(Sadness.Model.V)
-res
-Sadness.Model.V.AIC <- AIC(Sadness.Model.V)
-Sadness.Model.V.AIC
-```
-
-
 ```{r lme_selected_features_sensuality}
 Sensuality <- all_features[which(all_features$Category == "Sensuality"),]
 
@@ -666,7 +708,6 @@ Sensuality.Model.V.AIC <- AIC(Sensuality.Model.V)
 Sensuality.Model.V.AIC
 ```
 
-
 ```{r lme_selected_features_TenderLonging}
 TenderLonging <- all_features[which(all_features$Category == "TenderLonging"),]
 
@@ -682,24 +723,6 @@ res
 TenderLonging.Model.V.AIC <- AIC(TenderLonging.Model.V)
 TenderLonging.Model.V.AIC
 ```
-
-
-```{r lme_selected_features_Tranquility}
-Tranquility <- all_features[which(all_features$Category == "Tranquility"),]
-
-Tranquility.Model.A <- lmer(Arousal ~ Most_Common_Rhythmic_Value + Number_of_Strong_Rhythmic_Pulses_._Tempo_Standardized + Median_Rhythmic_Value_Offset + pcm_zcr_sma_skewness + pcm_zcr_sma_stddev + F0env_sma_linregerrQ + (1 |Song2) + (1 |ID), data=Tranquility)
-res <- summary(Tranquility.Model.A)
-res
-Tranquility.Model.A.AIC <- AIC(Tranquility.Model.A)
-Tranquility.Model.A.AIC
-
-Tranquility.Model.V <- lmer(Valence ~ Minor_Major_Triad_Ratio + pcm_zcr_sma_skewness + F0env_sma_skewness + F0env_sma_linregerrQ + Amount_of_Staccato + Strength_Ratio_of_Two_Strongest_Rhythmic_Pulses_._Tempo_Standardized + BPM + (1 |Song2) + (1 |ID), data=Tranquility)
-res <- summary(Tranquility.Model.V)
-res
-Tranquility.Model.V.AIC <- AIC(Tranquility.Model.V)
-Tranquility.Model.V.AIC
-```
-
 
 ```{r lme_selected_features_Transcendence}
 Transcendence <- all_features[which(all_features$Category == "Transcendence"),]
