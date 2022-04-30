@@ -149,15 +149,39 @@ dev.off()
 ```
 
 
+```{r barPlots}
+library(ggpubr)
+annotations[annotations == "TenderLonging"] <- "Tenderness"
+
+counts <- table(annotations$Arousal, annotations$Category)
+par(las=2) # make label text perpendicular to axis
+par(mar=c(5,8,4,2)) # increase y-axis margin.
+barplot(counts, main="Arousal ratings",
+  xlab="Number of ratings", col=c("lightyellow", "yellow1", "orange1", "red", "red4"),
+  legend = rownames(counts), horiz=TRUE, cex.names=1) 
+
+
+counts <- table(annotations$Valence, annotations$Category)
+par(las=2) # make label text perpendicular to axis
+par(mar=c(5,8,4,2)) # increase y-axis margin.
+barplot(counts, main="Valence ratings",
+  xlab="Number of ratings", col=c("navy", "royalblue1", "paleturquoise1", "seagreen2", "chartreuse1"),
+  legend = rownames(counts), horiz=TRUE, cex.names=1) 
+
+```
+
+
 ```{r PLOT2_emo}
 #annotations[annotations == "TenderLonging"] <- "Tenderness"
+#sad <- annotations[which(annotations$Category == "Sadness"),]
+#hist(sad$Valence)
 
 lapply(annotations[, c("Category", "Arousal")], table)
 ftable(xtabs(~ Category + Arousal, data = annotations))
 
 library(ggplot2)
 ggplot(annotations, aes(x = Arousal, y = Category))  +
-  geom_boxplot(size = 1, width=0.5, length=0.5, notch=TRUE, outlier.size=0.5) +   #geom_jitter(alpha = .5) +
+  geom_boxplot(size = 1, width=0.5, length=0.5, notch=FALSE, outlier.size=0.5) +   #geom_jitter(alpha = .5) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size=12), axis.text.y = element_text(size=12, color="black"), axis.title.x = element_text(size=13, face="bold"),
   plot.margin = margin(1, 10, 1, 1, "cm"))
 
@@ -165,7 +189,7 @@ lapply(annotations[, c("Category", "Valence")], table)
 ftable(xtabs(~ Category + Valence, data = annotations))
 
 ggplot(annotations, aes(x = Valence, y = Category)) +
-  geom_boxplot(size = 1, width=0.5, length=0.5, notch=TRUE, outlier.size=0.5) +   #geom_jitter(alpha = .5) +
+  geom_boxplot(size = 1, width=0.5, length=0.5, notch=FALSE, outlier.size=0.5, coef=0) +   #geom_jitter(alpha = .5) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size=12), axis.text.y = element_text(size=12, color="black"), axis.title.x = element_text(size=13, face="bold"),
   plot.margin = margin(1, 10, 1, 1, "cm"))
 ```
