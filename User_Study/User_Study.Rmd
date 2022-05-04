@@ -165,7 +165,7 @@ counts <- table(annotations$Valence, annotations$Category)
 par(las=2) # make label text perpendicular to axis
 par(mar=c(5,8,4,2)) # increase y-axis margin.
 barplot(counts, main="Valence ratings",
-  xlab="Number of ratings", col=c("navy", "royalblue1", "paleturquoise1", "seagreen2", "chartreuse1"),
+  xlab="Number of ratings", col=c("lightcyan", "steelblue1", "royalblue1", "mediumblue", "midnightblue"),
   legend = rownames(counts), horiz=TRUE, cex.names=1) 
 
 ```
