@@ -9,7 +9,7 @@ execute User_Study.Rmd (will perform the Gold Standard Assessment)
 2. To reproduce the experiments used to answer RQ1, go to the folder Features_Assessment:<br> 
 execute Features_Correlation.Rmd (will perform the Correlation Analysis)<br> 
 execute Multiple_Regression.Rmd (will perform the Multiple Regression)<br> 
-execute ConfMat_Perception.py (will compute the confusion matrix for eprception interpreted as NMDS in "Perception vs Classification")<br> 
+execute ConfMat_Perception.py (will compute the confusion matrix for perception interpreted as NMDS in "Perception vs Classification")<br> 
 execute Classification.py (will perform the ML experiments whose results are interpreted as NMDS in "Perception vs Classification")
 
 3. To reproduce the experiments used to answer RQ2, go to the folder ML_Task:<br> 
