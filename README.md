@@ -17,4 +17,4 @@ execute EMOPIA_4Q.py (will perform the ML experiments whose results are displaye
 
 If you find the content of this repository useful, you might consider giving us a citation:
 
-E. Parada-Cabaleiro, A. Batliner, M. Schmitt, B. Schuller, & M. Schedl (2023), Music Emotions in Solo Piano: Bridging the Gap Between Human Perception and Machine Learning, in Proc. of CMMR, Tokio, Japan, to appear.
+E. Parada-Cabaleiro, A. Batliner, M. Schmitt, B. Schuller, & M. Schedl (2023), Music Emotions in Solo Piano: Bridging the Gap Between Human Perception and Machine Learning, in Proc. of the Int. Symposium on Computer Music Multidisciplinary Research (CMMR), Tokyo, Japan,pp. 587-598.
